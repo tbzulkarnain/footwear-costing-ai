@@ -90,7 +90,7 @@ with col2:
                         # 2. Call Gemini REST API directly
                         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
                         
-                        # Hybrid Header Support: Supports both AIzaSy... (API Key) and AQ.Ab8RN... (Bearer Token)
+                        # Mendukung token AQ.Ab8RN... (Bearer Token) maupun AIzaSy... (API Key)
                         headers = {"Content-Type": "application/json"}
                         if api_key.startswith("AQ."):
                             headers["Authorization"] = f"Bearer {api_key}"
