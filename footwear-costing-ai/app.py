@@ -21,7 +21,6 @@ dan menghitung **Labor Cost (FOB)** secara otomatis.
 st.sidebar.header("⚙️ Pengaturan Parameter Costing")
 
 # --- AMBIL API KEY DARI SECRETS ATAU INPUT SIDEBAR ---
-# Jika GEMINI_API_KEY diset di Secrets Streamlit Cloud, nilainya otomatis terisi
 secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 api_key = st.sidebar.text_input(
@@ -83,7 +82,7 @@ with col2:
                         """
                         
                         response = client.models.generate_content(
-                            model="gemini-2.5-flash",
+                            model="gemini-1.5-flash",
                             contents=[img, prompt]
                         )
                         
@@ -108,17 +107,22 @@ with col2:
                             estimated_sam.append({"Process": "Base Upper Stitching (Low-cut)", "Department": "Stitching", "SAM": IE_BENCHMARK['stitching']['base']['low-cut']})
                         elif 'high-cut' in ai_text:
                             estimated_sam.append({"Process": "Base Upper Stitching (High-cut)", "Department": "Stitching", "SAM": IE_BENCHMARK['stitching']['base']['high-cut']})
+                        else:
+                            # Fallback default jika tidak spesifik terdeteksi
+                            estimated_sam.append({"Process": "Base Upper Stitching (Standard)", "Department": "Stitching", "SAM": 10.0})
 
                         if 'medium' in ai_text:
                             estimated_sam.append({"Process": "Upper Complexity Add-on (Medium)", "Department": "Stitching", "SAM": IE_BENCHMARK['stitching']['complexity_add_on']['medium']})
                         elif 'complex' in ai_text:
                             estimated_sam.append({"Process": "Upper Complexity Add-on (Complex)", "Department": "Stitching", "SAM": IE_BENCHMARK['stitching']['complexity_add_on']['complex']})
 
-                        if 'ada' in ai_text:
+                        if 'ada' in ai_text or 'yes' in ai_text:
                             estimated_sam.append({"Process": "Secondary Process (Punching/Logo)", "Department": "2nd Process", "SAM": IE_BENCHMARK['second_process']['base']})
 
                         if 'cementing' in ai_text:
                             estimated_sam.append({"Process": "Bottom Assembly & Lasting (Cementing)", "Department": "Assembly", "SAM": IE_BENCHMARK['assembly']['cementing']})
+                        else:
+                            estimated_sam.append({"Process": "Bottom Assembly & Lasting (Standard)", "Department": "Assembly", "SAM": 8.0})
 
                         # --- KALKULASI COST ---
                         DEPT_SETTINGS = {'Stitching': {'eff': 0.75}, '2nd Process': {'eff': 0.80}, 'Assembly': {'eff': 0.85}}
