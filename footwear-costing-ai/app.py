@@ -20,8 +20,17 @@ dan menghitung **Labor Cost (FOB)** secara otomatis.
 
 st.sidebar.header("⚙️ Pengaturan Parameter Costing")
 
-# Sidebar Parameter
-api_key = st.sidebar.text_input("Gemini API Key", type="password", help="Masukkan API Key Gemini kamu")
+# --- AMBIL API KEY DARI SECRETS ATAU INPUT SIDEBAR ---
+# Jika GEMINI_API_KEY diset di Secrets Streamlit Cloud, nilainya otomatis terisi
+secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
+
+api_key = st.sidebar.text_input(
+    "Gemini API Key", 
+    value=secret_api_key, 
+    type="password", 
+    help="Masukkan API Key Gemini kamu jika belum diset di Secrets Streamlit Cloud"
+)
+
 gaji_bulan = st.sidebar.number_input("Gaji Operator / Bulan (Rp)", value=5000000, step=250000)
 fx_rate = st.sidebar.number_input("Kurs USD (1 USD = Rp...)", value=16800, step=100)
 menit_bulan = st.sidebar.number_input("Menit Kerja Efektif / Bulan", value=10400, help="Standar 173.33 jam/bulan")
@@ -50,7 +59,7 @@ with col2:
     if uploaded_file is not None:
         if st.button("🚀 Analisis Sepatu & Hitung Costing", type="primary"):
             if not api_key:
-                st.error("Silakan masukkan Gemini API Key di sidebar terlebih dahulu!")
+                st.error("Silakan masukkan Gemini API Key di sidebar atau konfigurasi Secrets Streamlit!")
             else:
                 with st.spinner("Sedang menganalisis gambar pakai Gemini AI..."):
                     try:
