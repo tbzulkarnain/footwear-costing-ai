@@ -1,8 +1,9 @@
 import streamlit as st
-from google import genai
 from PIL import Image
 import pandas as pd
 import io
+import requests
+import base64
 
 # --- CONFIGURASI HALAMAN ---
 st.set_page_config(
@@ -20,14 +21,14 @@ dan menghitung **Labor Cost (FOB)** secara otomatis.
 
 st.sidebar.header("⚙️ Pengaturan Parameter Costing")
 
-# --- AMBIL API KEY DARI SECRETS ATAU INPUT SIDEBAR ---
+# --- AMBIL API KEY / TOKEN DARI SECRETS ATAU INPUT SIDEBAR ---
 secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 api_key = st.sidebar.text_input(
-    "Gemini API Key", 
+    "Gemini API Key / Access Token", 
     value=secret_api_key, 
     type="password", 
-    help="Masukkan API Key Gemini kamu jika belum diset di Secrets Streamlit Cloud"
+    help="Masukkan API Key (AIzaSy...) atau Access Token (AQ.Ab8RN...) Gemini kamu."
 )
 
 gaji_bulan = st.sidebar.number_input("Gaji Operator / Bulan (Rp)", value=5000000, step=250000)
@@ -62,7 +63,12 @@ with col2:
             else:
                 with st.spinner("Sedang menganalisis gambar pakai Gemini AI..."):
                     try:
-                        client = genai.Client(api_key=api_key)
+                        # 1. Prepare Image to Base64
+                        img_byte_arr = io.BytesIO()
+                        img_format = img.format if img.format else 'JPEG'
+                        img.save(img_byte_arr, format=img_format)
+                        img_bytes = img_byte_arr.getvalue()
+                        base64_image = base64.b64encode(img_bytes).decode('utf-8')
                         
                         prompt = """
                         Kamu adalah seorang Industrial Engineering & Costing Specialist di industri footwear.
@@ -81,15 +87,42 @@ with col2:
                         Jawab langsung dengan poin-poin data tanpa kata pembuka formal.
                         """
                         
-                        response = client.models.generate_content(
-                            model="gemini-1.5-flash",
-                            contents=[img, prompt]
-                        )
+                        # 2. Call Gemini REST API directly
+                        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
                         
-                        ai_text = response.text.lower()
+                        # Hybrid Header Support: Supports both AIzaSy... (API Key) and AQ.Ab8RN... (Bearer Token)
+                        headers = {"Content-Type": "application/json"}
+                        if api_key.startswith("AQ."):
+                            headers["Authorization"] = f"Bearer {api_key}"
+                        else:
+                            headers["x-goog-api-key"] = api_key
+                        
+                        payload = {
+                            "contents": [{
+                                "parts": [
+                                    {"text": prompt},
+                                    {
+                                        "inline_data": {
+                                            "mime_type": f"image/{img_format.lower()}",
+                                            "data": base64_image
+                                        }
+                                    }
+                                ]
+                            }]
+                        }
+                        
+                        res = requests.post(url, headers=headers, json=payload)
+                        res_json = res.json()
+                        
+                        if res.status_code != 200:
+                            err_msg = res_json.get('error', {}).get('message', str(res_json))
+                            raise Exception(f"API Error ({res.status_code}): {err_msg}")
+                        
+                        output_text = res_json['candidates'][0]['content']['parts'][0]['text']
+                        ai_text = output_text.lower()
                         
                         with st.expander("📄 Lihat Hasil Deteksi Visual AI", expanded=True):
-                            st.write(response.text)
+                            st.write(output_text)
                         
                         # --- LOGIKA SAM IE ---
                         IE_BENCHMARK = {
@@ -108,7 +141,6 @@ with col2:
                         elif 'high-cut' in ai_text:
                             estimated_sam.append({"Process": "Base Upper Stitching (High-cut)", "Department": "Stitching", "SAM": IE_BENCHMARK['stitching']['base']['high-cut']})
                         else:
-                            # Fallback default jika tidak spesifik terdeteksi
                             estimated_sam.append({"Process": "Base Upper Stitching (Standard)", "Department": "Stitching", "SAM": 10.0})
 
                         if 'medium' in ai_text:
