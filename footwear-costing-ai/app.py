@@ -66,11 +66,24 @@ with col2:
                     try:
                         # 1. Konfigurasi SDK Gemini
                         genai.configure(api_key=api_key.strip())
-                        
-                        # Menggunakan model flash yang aktif
-                        model = genai.GenerativeModel('gemini-1.5-flash')
 
-                        # 2. Prompt Visual Detection
+                        # 2. Inisialisasi Model dengan Fallback Otomatis
+                        target_model_name = 'gemini-2.5-flash'
+                        try:
+                            model = genai.GenerativeModel(target_model_name)
+                        except Exception:
+                            # Jika 2.5 flash tidak ada, pilih model flash pertama yang mendukung generateContent
+                            available_models = [
+                                m.name for m in genai.list_models() 
+                                if 'generateContent' in m.supported_generation_methods and 'flash' in m.name
+                            ]
+                            if available_models:
+                                target_model_name = available_models[0]
+                                model = genai.GenerativeModel(target_model_name)
+                            else:
+                                raise Exception("Tidak ditemukan model Flash yang mendukung generateContent.")
+
+                        # 3. Prompt Visual Detection
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
                         Analyze the attached footwear image and output ONLY a valid raw JSON object with the following structure:
@@ -91,10 +104,9 @@ with col2:
                         - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
-                        # 3. Request ke Gemini AI
+                        # 4. Request ke Gemini AI
                         response = model.generate_content([img, prompt])
                         
-                        # Ekstrak bagian JSON menggunakan regex secara bersih
                         raw_text = response.text
                         json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
                         
