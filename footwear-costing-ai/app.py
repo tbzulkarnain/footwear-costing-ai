@@ -3,6 +3,7 @@ from PIL import Image
 import pandas as pd
 import io
 import json
+import re
 import google.generativeai as genai
 
 # --- PAGE CONFIGURATION ---
@@ -66,13 +67,13 @@ with col2:
                         # 1. Konfigurasi SDK Gemini
                         genai.configure(api_key=api_key.strip())
                         
-                        # Menggunakan model flash yang stabil
+                        # Menggunakan model flash yang aktif
                         model = genai.GenerativeModel('gemini-1.5-flash')
 
-                        # 2. Prompt Visual Detection (JSON Output Request)
+                        # 2. Prompt Visual Detection
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
-                        Analyze the attached footwear image and output ONLY a valid raw JSON object (without markdown codeblock like ```json) with the following exact keys:
+                        Analyze the attached footwear image and output ONLY a valid raw JSON object with the following structure:
 
                         {
                           "shoe_type": "low-cut",
@@ -84,13 +85,18 @@ with col2:
                           "estimated_panel_count": 6
                         }
 
-                        Allowed options for shoe_type: "low-cut", "mid-cut", "high-cut", "boot", "slip-on".
-                        Allowed options for upper_complexity: "simple", "medium", "complex".
-                        Allowed options for bottom_construction: "cementing", "vulcanized", "stitchdown", "injection".
+                        Allowed values:
+                        - shoe_type: "low-cut", "mid-cut", "high-cut", "boot", "slip-on"
+                        - upper_complexity: "simple", "medium", "complex"
+                        - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
                         # 3. Request ke Gemini AI
                         response = model.generate_content([img, prompt])
                         
-                        # Parsing JSON Text
-                        clean_text = response.text.replace("
+                        # Ekstrak bagian JSON menggunakan regex untuk menghindari SyntaxError string
+                        json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+                        if json_match:
+                            clean_text = json_match.group(0)
+                        else:
+                            clean_text = response.
