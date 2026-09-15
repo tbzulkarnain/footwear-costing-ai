@@ -67,7 +67,7 @@ with col2:
                         # 1. Konfigurasi SDK Gemini
                         genai.configure(api_key=api_key.strip())
 
-                        # 2. Inisialisasi Model Menggunakan gemini-3.6-flash
+                        # 2. Inisialisasi Model Menggunakan gemini-3.6-flash (dengan Fallback)
                         target_model_name = 'gemini-3.6-flash'
                         try:
                             model = genai.GenerativeModel(target_model_name)
@@ -112,9 +112,86 @@ with col2:
                             
                         ai_data = json.loads(clean_text)
 
-                        # --- TAMPILAN VIEW AI VISUAL DETECTION (Expander JSON Asli) ---
+                        # --- TAMPILAN DASHBOARD METRIC CARDS ---
                         with st.expander("📄 View AI Visual Detection Results (Structured Data)", expanded=True):
-                            st.json(ai_data)
+                            st.markdown("""
+                                <style>
+                                .card-box {
+                                    background-color: #f8f9fa;
+                                    border-radius: 8px;
+                                    padding: 12px 16px;
+                                    border-left: 5px solid #007bff;
+                                    margin-bottom: 12px;
+                                }
+                                .card-title {
+                                    font-size: 11px;
+                                    color: #6c757d;
+                                    text-transform: uppercase;
+                                    font-weight: bold;
+                                    margin-bottom: 4px;
+                                }
+                                .card-value {
+                                    font-size: 15px;
+                                    color: #212529;
+                                    font-weight: 600;
+                                }
+                                </style>
+                            """, unsafe_allow_html=True)
+
+                            col_a, col_b, col_c = st.columns(3)
+                            
+                            with col_a:
+                                st.markdown(f"""
+                                    <div class="card-box">
+                                        <div class="card-title">👟 Shoe Type</div>
+                                        <div class="card-value">{str(ai_data.get('shoe_type', '-')).upper()}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                
+                            with col_b:
+                                st.markdown(f"""
+                                    <div class="card-box">
+                                        <div class="card-title">🧩 Complexity</div>
+                                        <div class="card-value">{str(ai_data.get('upper_complexity', '-')).upper()}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
+                                
+                            with col_c:
+                                st.markdown(f"""
+                                    <div class="card-box">
+                                        <div class="card-title">✂️ Panel Count</div>
+                                        <div class="card-value">{ai_data.get('estimated_panel_count', 0)} Pcs</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
+
+                            col_d, col_e, col_f = st.columns(3)
+                            
+                            with col_d:
+                                st.markdown(f"""
+                                    <div class="card-box" style="border-left-color: #28a745;">
+                                        <div class="card-title">🧵 Upper Material</div>
+                                        <div class="card-value">{str(ai_data.get('upper_material', '-')).title()}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
+
+                            with col_e:
+                                st.markdown(f"""
+                                    <div class="card-box" style="border-left-color: #28a745;">
+                                        <div class="card-title">🛠️ Bottom Const.</div>
+                                        <div class="card-value">{str(ai_data.get('bottom_construction', '-')).upper()}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
+
+                            has_2nd = ai_data.get('second_process_detected', False)
+                            proc_detail = ai_data.get('second_process_details', 'None') if has_2nd else "Not Detected"
+
+                            with col_f:
+                                st.markdown(f"""
+                                    <div class="card-box" style="border-left-color: #ffc107;">
+                                        <div class="card-title">🎨 2nd Process</div>
+                                        <div class="card-value">{proc_detail.title()}</div>
+                                    </div>
+                                """, unsafe_allow_html=True)
 
                         # --- IE SAM BENCHMARK LOGIC (PYTHON COMPUTATION ENGINE) ---
                         IE_BENCHMARK = {
