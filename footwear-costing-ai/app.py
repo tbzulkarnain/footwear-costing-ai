@@ -85,8 +85,8 @@ with col2:
                         - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
-                        # 3. Request to Gemini AI with Auto-Fallback Strategy (Daftar Model Aman)
-                        candidate_models = ['gemini-2.5-flash', 'gemini-1.5-flash']
+                        # 3. Request to Gemini AI (Model 2.0 Terbaru & Versi Fallback Resmi)
+                        candidate_models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest']
                         response = None
                         last_error = None
 
@@ -94,10 +94,10 @@ with col2:
                             try:
                                 model = genai.GenerativeModel(model_name)
                                 response = model.generate_content([img, prompt])
-                                break  # Berhasil dapat respon
+                                break  # Jika berhasil, keluar loop
                             except Exception as err:
                                 last_error = err
-                                continue  # Kuota habis / error, lanjut ke model berikutnya
+                                continue  # Coba model berikutnya jika error 404/429
 
                         if response is None:
                             raise last_error
