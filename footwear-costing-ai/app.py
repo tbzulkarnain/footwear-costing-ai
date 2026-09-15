@@ -64,7 +64,29 @@ with col2:
                         # 1. Configure Gemini SDK
                         genai.configure(api_key=api_key.strip())
 
-                        # 2. Visual Detection Prompt
+                        # 2. Dynamic Fetching: Ambil daftar model aktif langsung dari Google API
+                        available_models = []
+                        for m in genai.list_models():
+                            if 'generateContent' in m.supported_generation_methods:
+                                # Mengambil nama model tanpa prefix 'models/' jika ada
+                                clean_name = m.name.replace('models/', '')
+                                available_models.append(clean_name)
+
+                        # Prioritaskan versi Flash yang stabil di API akun kamu
+                        candidate_models = [
+                            m for m in available_models 
+                            if 'flash' in m.lower() and '3.6' not in m  # Skip 3.6 jika kuota 429 sebelumnya habis
+                        ]
+                        
+                        # Jika tidak ada model flash alternatif, sertakan seluruh model yang tersedia
+                        if not candidate_models:
+                            candidate_models = available_models
+
+                        if not candidate_models:
+                            st.error("Tidak ada model Gemini yang mendukung 'generateContent' ditemukan pada akun API ini.")
+                            st.stop()
+
+                        # 3. Visual Detection Prompt
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
                         Analyze the attached footwear image and output ONLY a valid raw JSON object with the following structure:
@@ -85,8 +107,7 @@ with col2:
                         - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
-                        # 3. Request to Gemini AI (Model 2.0 Terbaru & Versi Fallback Resmi)
-                        candidate_models = ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash-latest']
+                        # 4. Request dengan Fallback Otomatis dari Daftar Model Aktif
                         response = None
                         last_error = None
 
@@ -94,10 +115,10 @@ with col2:
                             try:
                                 model = genai.GenerativeModel(model_name)
                                 response = model.generate_content([img, prompt])
-                                break  # Jika berhasil, keluar loop
+                                break  # Berhasil mendapat respons
                             except Exception as err:
                                 last_error = err
-                                continue  # Coba model berikutnya jika error 404/429
+                                continue  # Lanjut ke model aktif berikutnya
 
                         if response is None:
                             raise last_error
