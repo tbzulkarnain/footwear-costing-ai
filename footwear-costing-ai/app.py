@@ -5,7 +5,7 @@ import io
 import requests
 import base64
 
-# --- CONFIGURASI HALAMAN ---
+# --- KONFIGURASI HALAMAN ---
 st.set_page_config(
     page_title="Footwear Labor Costing AI",
     page_icon="👟",
@@ -28,7 +28,7 @@ api_key = st.sidebar.text_input(
     "Gemini API Key", 
     value=secret_api_key, 
     type="password", 
-    help="Masukkan API Key Gemini (AQ... atau AIzaSy...) kamu"
+    help="Masukkan API Key Gemini kamu"
 )
 
 gaji_bulan = st.sidebar.number_input("Gaji Operator / Bulan (Rp)", value=5000000, step=250000)
@@ -89,11 +89,12 @@ with col2:
                         
                         clean_key = api_key.strip()
                         
-                        # 2. Endpoint Gemini 2.5 Flash Terbaru
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={clean_key}"
+                        # 2. Endpoint Gemini 3.6 Flash Resmi
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={clean_key}"
                         
                         headers = {
-                            "Content-Type": "application/json"
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": clean_key
                         }
                         
                         payload = {
