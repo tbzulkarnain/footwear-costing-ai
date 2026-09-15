@@ -116,8 +116,24 @@ with col2:
                             
                         ai_data = json.loads(clean_text)
 
-                        with st.expander("📄 View AI Visual Detection Results (Structured Data)", expanded=True):
-                            st.json(ai_data)
+                        st.markdown("### 🔍 Hasil Analisis Visual AI")
+
+# Baris 1: Ringkasan Utama Sepatu
+c1, c2, c3 = st.columns(3)
+c1.metric("Tipe Sepatu", str(ai_data.get('shoe_type', '-')).upper())
+c2.metric("Kompleksitas Upper", str(ai_data.get('upper_complexity', '-')).upper())
+c3.metric("Jumlah Panel", f"{ai_data.get('estimated_panel_count', 0)} Pcs")
+
+# Baris 2: Material & Proses Tambahan
+c4, c5, c6 = st.columns(3)
+c4.metric("Material Upper", str(ai_data.get('upper_material', '-')).title())
+c5.metric("Konstruksi Bottom", str(ai_data.get('bottom_construction', '-')).upper())
+
+has_2nd = ai_data.get('second_process_detected', False)
+proc_detail = ai_data.get('second_process_details', 'Tidak Ada') if has_2nd else "Tidak Ada"
+c6.metric("Proses Sekunder (2nd Proc)", proc_detail)
+
+st.markdown("---")
 
                         # --- IE SAM BENCHMARK LOGIC (PYTHON COMPUTATION ENGINE) ---
                         IE_BENCHMARK = {
