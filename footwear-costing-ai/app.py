@@ -67,12 +67,11 @@ with col2:
                         # 1. Konfigurasi SDK Gemini
                         genai.configure(api_key=api_key.strip())
 
-                        # 2. Inisialisasi Model dengan Fallback Otomatis
-                        target_model_name = 'gemini-2.5-flash'
+                        # 2. Inisialisasi Model Menggunakan gemini-3.6-flash (dengan Fallback)
+                        target_model_name = 'gemini-3.6-flash'
                         try:
                             model = genai.GenerativeModel(target_model_name)
                         except Exception:
-                            # Jika 2.5 flash tidak ada, pilih model flash pertama yang mendukung generateContent
                             available_models = [
                                 m.name for m in genai.list_models() 
                                 if 'generateContent' in m.supported_generation_methods and 'flash' in m.name
