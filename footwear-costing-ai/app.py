@@ -21,14 +21,14 @@ dan menghitung **Labor Cost (FOB)** secara otomatis.
 
 st.sidebar.header("⚙️ Pengaturan Parameter Costing")
 
-# --- AMBIL API KEY / TOKEN DARI SECRETS ATAU INPUT SIDEBAR ---
+# --- AMBIL API KEY DARI SECRETS ATAU INPUT SIDEBAR ---
 secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 api_key = st.sidebar.text_input(
-    "Gemini API Key / Access Token", 
+    "Gemini API Key", 
     value=secret_api_key, 
     type="password", 
-    help="Masukkan API Key (AIzaSy...) atau Access Token (AQ.Ab8RN...) Gemini kamu."
+    help="Masukkan API Key Gemini (AQ... atau AIzaSy...) kamu"
 )
 
 gaji_bulan = st.sidebar.number_input("Gaji Operator / Bulan (Rp)", value=5000000, step=250000)
@@ -61,7 +61,7 @@ with col2:
             if not api_key:
                 st.error("Silakan masukkan Gemini API Key di sidebar atau konfigurasi Secrets Streamlit!")
             else:
-                with st.spinner("Sedang menganalisis gambar pakai Gemini AI..."):
+                with st.spinner("Sedang menganalisis gambar memakai Gemini AI..."):
                     try:
                         # 1. Prepare Image to Base64
                         img_byte_arr = io.BytesIO()
@@ -87,15 +87,15 @@ with col2:
                         Jawab langsung dengan poin-poin data tanpa kata pembuka formal.
                         """
                         
-                        # 2. Call Gemini REST API directly
+                        # 2. Endpoint REST Gemini API
                         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
                         
-                        # Mendukung token AQ.Ab8RN... (Bearer Token) maupun AIzaSy... (API Key)
-                        headers = {"Content-Type": "application/json"}
-                        if api_key.startswith("AQ."):
-                            headers["Authorization"] = f"Bearer {api_key}"
-                        else:
-                            headers["x-goog-api-key"] = api_key
+                        # Format Header Khusus untuk Kunci AQ...
+                        clean_key = api_key.strip()
+                        headers = {
+                            "Content-Type": "application/json",
+                            "x-goog-api-key": clean_key
+                        }
                         
                         payload = {
                             "contents": [{
