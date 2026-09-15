@@ -15,9 +15,9 @@ st.set_page_config(
 
 st.title("👟 Footwear Labor Costing (FOB) AI Engine")
 st.markdown("""
-Aplikasi ini memanfaatkan **Gemini Vision AI** untuk menganalisis konstruksi sepatu dari foto, 
-mendeteksi fitur manufaktur, dan memetakan nilai **SAM (Standard Allowed Minutes)** berdasarkan benchmark 
-*Industrial Engineering*, lalu menghitung **Labor Cost (FOB)** secara presisi menggunakan kalkulasi Python.
+This application utilizes **Gemini Vision AI** to analyze footwear construction from photos, 
+detect manufacturing features, and map **SAM (Standard Allowed Minutes)** values based on 
+*Industrial Engineering* benchmarks to accurately calculate **Labor Cost (FOB)**.
 """)
 
 st.sidebar.header("⚙️ Costing Parameters Setup")
@@ -26,14 +26,13 @@ st.sidebar.header("⚙️ Costing Parameters Setup")
 secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
 if not secret_api_key:
-    api_key = st.sidebar.text_input("Gemini API Key", type="password", help="Masukkan API Key jika tidak diset di secrets.toml")
+    api_key = st.sidebar.text_input("Gemini API Key", type="password", help="Enter API Key if not configured in secrets.toml")
 else:
     api_key = secret_api_key
-    st.sidebar.success("🔑 API Key terdeteksi dari Secrets")
 
 monthly_salary = st.sidebar.number_input("Operator Salary / Month (IDR)", value=5000000, step=250000)
 fx_rate = st.sidebar.number_input("USD Exchange Rate (1 USD = IDR...)", value=16800, step=100)
-monthly_minutes = st.sidebar.number_input("Effective Work Minutes / Month", value=10400, help="Standar 173.33 jam/bulan = 10.400 menit")
+monthly_minutes = st.sidebar.number_input("Effective Work Minutes / Month", value=10400, help="Standard: 173.33 hours/month = 10,400 minutes")
 
 # Calculate CPM (Cost Per Minute)
 cpm_idr = monthly_salary / monthly_minutes
@@ -60,14 +59,14 @@ with col2:
     if uploaded_file is not None:
         if st.button("🚀 Analyze Shoe & Calculate Costing", type="primary", use_container_width=True):
             if not api_key:
-                st.error("API Key Gemini tidak ditemukan! Harap masukkan API Key pada sidebar atau set di Streamlit Secrets.")
+                st.error("Gemini API Key not found! Please enter an API Key in the sidebar or configure Streamlit Secrets.")
             else:
                 with st.spinner("Analyzing image using Gemini Vision AI..."):
                     try:
-                        # 1. Konfigurasi SDK Gemini
+                        # 1. Configure Gemini SDK
                         genai.configure(api_key=api_key.strip())
 
-                        # 2. Inisialisasi Model Menggunakan gemini-3.6-flash (dengan Fallback)
+                        # 2. Initialize Model with Fallback
                         target_model_name = 'gemini-3.6-flash'
                         try:
                             model = genai.GenerativeModel(target_model_name)
@@ -78,7 +77,7 @@ with col2:
                             ]
                             model = genai.GenerativeModel(available_models[0] if available_models else target_model_name)
 
-                        # 3. Prompt Visual Detection
+                        # 3. Visual Detection Prompt
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
                         Analyze the attached footwear image and output ONLY a valid raw JSON object with the following structure:
@@ -99,7 +98,7 @@ with col2:
                         - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
-                        # 4. Request ke Gemini AI
+                        # 4. Request to Gemini AI
                         response = model.generate_content([img, prompt])
                         
                         raw_text = response.text
@@ -112,7 +111,7 @@ with col2:
                             
                         ai_data = json.loads(clean_text)
 
-                        # --- TAMPILAN DASHBOARD METRIC CARDS ---
+                        # --- AI VISUAL DETECTION DASHBOARD CARDS ---
                         with st.expander("📄 View AI Visual Detection Results (Structured Data)", expanded=True):
                             st.markdown("""
                                 <style>
@@ -193,7 +192,7 @@ with col2:
                                     </div>
                                 """, unsafe_allow_html=True)
 
-                        # --- IE SAM BENCHMARK LOGIC (PYTHON COMPUTATION ENGINE) ---
+                        # --- IE SAM BENCHMARK LOGIC ---
                         IE_BENCHMARK = {
                             'cutting': {
                                 'base': 2.0,
@@ -214,7 +213,7 @@ with col2:
 
                         estimated_sam = []
 
-                        # A. Process SAM Cutting
+                        # A. Cutting Process
                         panel_cnt = int(ai_data.get('estimated_panel_count', 6))
                         cutting_sam = IE_BENCHMARK['cutting']['base'] + (max(0, panel_cnt - 4) * IE_BENCHMARK['cutting']['panel_addon'])
                         estimated_sam.append({
@@ -223,7 +222,7 @@ with col2:
                             "SAM": round(cutting_sam, 2)
                         })
 
-                        # B. Process SAM Stitching
+                        # B. Stitching Process
                         shoe_type = str(ai_data.get('shoe_type', 'low-cut')).lower()
                         base_stitch_sam = IE_BENCHMARK['stitching']['base'].get(shoe_type, 9.0)
                         estimated_sam.append({
@@ -241,7 +240,7 @@ with col2:
                                 "SAM": cmplx_sam
                             })
 
-                        # C. Process SAM 2nd Process
+                        # C. 2nd Process
                         has_2nd_proc = ai_data.get('second_process_detected', False)
                         if has_2nd_proc:
                             proc_detail = ai_data.get('second_process_details', 'Decorative Process')
@@ -251,7 +250,7 @@ with col2:
                                 "SAM": IE_BENCHMARK['second_process']['base']
                             })
 
-                        # D. Process SAM Assembly
+                        # D. Assembly Process
                         bottom_const = str(ai_data.get('bottom_construction', 'cementing')).lower()
                         assembly_sam = IE_BENCHMARK['assembly'].get(bottom_const, 8.5)
                         estimated_sam.append({
@@ -330,6 +329,6 @@ with col2:
                         )
 
                     except json.JSONDecodeError:
-                        st.error("Gagal membaca respons AI sebagai JSON. Silakan coba klik tombol analisis sekali lagi.")
+                        st.error("Failed to parse AI response as JSON. Please try clicking the analyze button again.")
                     except Exception as e:
-                        st.error(f"Terjadi kesalahan saat memproses data: {e}")
+                        st.error(f"An error occurred while processing data: {e}")
