@@ -84,15 +84,14 @@ with col2:
                         """
 
                         # 3. Panggil API dengan Structured JSON Config & Model Terbaru
-                        response = client.models.generate_content(
-                            model='gemini-2.5-flash',
-                            contents=[img, prompt],
-                            config=types.GenerateContentConfig(
-                                temperature=0.1,
-                                response_mime_type="application/json"
-                            )
-                        )
-
+response = client.models.generate_content(
+    model='gemini-3.6-flash',  # <--- Ganti di sini
+    contents=[img, prompt],
+    config=types.GenerateContentConfig(
+        temperature=0.1,
+        response_mime_type="application/json"
+    )
+)
                         # Parsing JSON output dari AI
                         ai_data = json.loads(response.text)
 
