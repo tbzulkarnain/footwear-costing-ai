@@ -87,14 +87,13 @@ with col2:
                         Jawab langsung dengan poin-poin data tanpa kata pembuka formal.
                         """
                         
-                        # 2. Endpoint REST Gemini API
-                        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-                        
-                        # Format Header Khusus untuk Kunci AQ...
                         clean_key = api_key.strip()
+                        
+                        # 2. Endpoint Gemini 2.5 Flash Terbaru
+                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={clean_key}"
+                        
                         headers = {
-                            "Content-Type": "application/json",
-                            "x-goog-api-key": clean_key
+                            "Content-Type": "application/json"
                         }
                         
                         payload = {
