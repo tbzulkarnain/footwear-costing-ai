@@ -64,18 +64,7 @@ with col2:
                         # 1. Configure Gemini SDK
                         genai.configure(api_key=api_key.strip())
 
-                        # 2. Initialize Model with Fallback
-                        target_model_name = 'gemini-3.6-flash'
-                        try:
-                            model = genai.GenerativeModel(target_model_name)
-                        except Exception:
-                            available_models = [
-                                m.name for m in genai.list_models() 
-                                if 'generateContent' in m.supported_generation_methods and 'flash' in m.name
-                            ]
-                            model = genai.GenerativeModel(available_models[0] if available_models else target_model_name)
-
-                        # 3. Visual Detection Prompt
+                        # 2. Visual Detection Prompt
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
                         Analyze the attached footwear image and output ONLY a valid raw JSON object with the following structure:
@@ -96,9 +85,24 @@ with col2:
                         - bottom_construction: "cementing", "vulcanized", "stitchdown", "injection"
                         """
 
-                        # 4. Request to Gemini AI
-                        response = model.generate_content([img, prompt])
-                        
+                        # 3. Request to Gemini AI with Auto-Fallback Strategy
+                        # Utamakan gemini-1.5-flash karena kuota harian jauh lebih besar dibanding 3.6-flash
+                        candidate_models = ['gemini-1.5-flash', 'gemini-2.5-flash', 'gemini-3.6-flash']
+                        response = None
+                        last_error = None
+
+                        for model_name in candidate_models:
+                            try:
+                                model = genai.GenerativeModel(model_name)
+                                response = model.generate_content([img, prompt])
+                                break  # Jika berhasil dapat respons, keluar dari loop
+                            except Exception as err:
+                                last_error = err
+                                continue  # Jika kena error/quota limit, coba model berikutnya
+
+                        if response is None:
+                            raise last_error
+
                         raw_text = response.text
                         json_match = re.search(r'\{.*\}', raw_text, re.DOTALL)
                         
