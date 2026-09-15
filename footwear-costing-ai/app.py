@@ -24,12 +24,15 @@ st.sidebar.header("⚙️ Costing Parameters Setup")
 # --- FETCH API KEY FROM SECRETS OR SIDEBAR INPUT ---
 secret_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-api_key = st.sidebar.text_input(
-    "Gemini API Key", 
-    value=secret_api_key, 
+# BENAR (Kunci aman tersimpan di belakang layar):
+api_key_input = st.sidebar.text_input(
+    "Gemini API Key (Optional)", 
     type="password", 
-    help="Enter your Gemini API Key here if not configured in Streamlit Secrets"
+    help="Leave blank to use the app's default key, or enter your own Gemini API Key."
 )
+
+# Gunakan input user jika ada, jika kosong gunakan secret_api_key dari Streamlit
+api_key = api_key_input if api_key_input else secret_api_key
 
 monthly_salary = st.sidebar.number_input("Operator Salary / Month (IDR)", value=5000000, step=250000)
 fx_rate = st.sidebar.number_input("USD Exchange Rate (1 USD = IDR...)", value=16800, step=100)
