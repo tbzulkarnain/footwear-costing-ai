@@ -2,9 +2,9 @@ import streamlit as st
 from PIL import Image
 import pandas as pd
 import io
-import requests
-import base64
 import json
+from google import genai
+from google.genai import types
 
 # --- PAGE CONFIGURATION ---
 st.set_page_config(
@@ -64,17 +64,13 @@ with col2:
             else:
                 with st.spinner("Analyzing image using Gemini Vision AI..."):
                     try:
-                        # 1. Prepare Image to Base64
-                        img_byte_arr = io.BytesIO()
-                        img_format = img.format if img.format else 'JPEG'
-                        img.save(img_byte_arr, format=img_format)
-                        img_bytes = img_byte_arr.getvalue()
-                        base64_image = base64.b64encode(img_bytes).decode('utf-8')
+                        # 1. Inisialisasi Gemini Client menggunakan SDK Resmi
+                        client = genai.Client(api_key=api_key.strip())
 
-                        # 2. JSON-Structured Prompt for deterministic parsing
+                        # 2. Prompt Visual Detection
                         prompt = """
                         You are an expert Footwear Industrial Engineer & Costing Specialist.
-                        Analyze the attached footwear image and output ONLY a raw JSON object (no markdown codeblock, no text outside JSON) with the following structure:
+                        Analyze the attached footwear image and output ONLY a raw JSON object with the following structure:
 
                         {
                           "shoe_type": "low-cut" | "mid-cut" | "high-cut" | "boot" | "slip-on",
@@ -87,42 +83,18 @@ with col2:
                         }
                         """
 
-                        clean_key = api_key.strip()
-                        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={clean_key}"
+                        # 3. Panggil API dengan Structured JSON Config & Model Terbaru
+                        response = client.models.generate_content(
+                            model='gemini-2.5-flash',
+                            contents=[img, prompt],
+                            config=types.GenerateContentConfig(
+                                temperature=0.1,
+                                response_mime_type="application/json"
+                            )
+                        )
 
-                        headers = {
-                            "Content-Type": "application/json"
-                        }
-
-                        payload = {
-                            "contents": [{
-                                "parts": [
-                                    {"text": prompt},
-                                    {
-                                        "inline_data": {
-                                            "mime_type": f"image/{img_format.lower()}",
-                                            "data": base64_image
-                                        }
-                                    }
-                                ]
-                            }],
-                            "generationConfig": {
-                                "temperature": 0.1,
-                                "response_mime_type": "application/json"
-                            }
-                        }
-
-                        res = requests.post(url, headers=headers, json=payload)
-                        res_json = res.json()
-
-                        if res.status_code != 200:
-                            err_msg = res_json.get('error', {}).get('message', str(res_json))
-                            raise Exception(f"API Error ({res.status_code}): {err_msg}")
-
-                        raw_output = res_json['candidates'][0]['content']['parts'][0]['text']
-                        
                         # Parsing JSON output dari AI
-                        ai_data = json.loads(raw_output)
+                        ai_data = json.loads(response.text)
 
                         with st.expander("📄 View AI Visual Detection Results (Structured Data)", expanded=True):
                             st.json(ai_data)
@@ -131,7 +103,7 @@ with col2:
                         IE_BENCHMARK = {
                             'cutting': {
                                 'base': 2.0,
-                                'panel_addon': 0.25 # SAM per ekstra panel
+                                'panel_addon': 0.25  # SAM per ekstra panel
                             },
                             'stitching': {
                                 'base': {'low-cut': 9.0, 'mid-cut': 11.0, 'high-cut': 13.0, 'boot': 15.0, 'slip-on': 7.5},
@@ -241,10 +213,8 @@ with col2:
                         # --- EXPORT TO EXCEL SHEET ---
                         buffer = io.BytesIO()
                         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                            # Sheet 1: Costing Breakdown Table
                             df.to_excel(writer, sheet_name='Costing Summary', index=False)
                             
-                            # Sheet 2: Parameters & AI Metadata
                             params_df = pd.DataFrame([
                                 {"Parameter": "Monthly Salary (IDR)", "Value": monthly_salary},
                                 {"Parameter": "FX Rate (USD/IDR)", "Value": fx_rate},
@@ -265,6 +235,6 @@ with col2:
                         )
 
                     except json.JSONDecodeError:
-                        st.error("Gagal membaca hasil keluaran AI. Pastikan AI mengembalikan format JSON yang valid.")
+                        st.error("Gagal membaca hasil keluaran AI. Format respons tidak sesuai JSON.")
                     except Exception as e:
                         st.error(f"Terjadi kesalahan saat memproses data: {e}")
