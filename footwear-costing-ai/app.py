@@ -15,9 +15,7 @@ st.set_page_config(
 
 st.title("👟 Footwear Labor Costing (FOB) AI Engine")
 st.markdown("""
-This application utilizes **Gemini Vision AI** to analyze footwear construction from photos, 
-detect manufacturing features, and map **SAM (Standard Allowed Minutes)** values based on 
-*Industrial Engineering* benchmarks to accurately calculate **Labor Cost (FOB)**.
+This is a simple AI experiment to estimate footwear labor cost from a shoe image, using Gemini Vision AI and SAM references.
 """)
 
 st.sidebar.header("⚙️ Costing Parameters Setup")
