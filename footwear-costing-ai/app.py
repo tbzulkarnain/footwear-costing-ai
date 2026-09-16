@@ -354,13 +354,15 @@ with col2:
                         st.error("Failed to parse AI response as JSON. Please try clicking the analyze button again.")
                     except Exception as e:
                         st.error(f"An error occurred while processing data: {e}")
-                        # Tambahkan di bagian bawah st.sidebar pada file app.py
+                        # Tambahkan di bagian paling bawah st.sidebar pada app.py
 st.sidebar.markdown("---")
 st.sidebar.caption("📈 **Total Pengunjung Apps:**")
+
+# Menggunakan HitWebCounter (format PNG, pasti tampil di Streamlit)
 st.sidebar.markdown(
     """
-    <a href="https://hits.seeyoufarm.com">
-        <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Ffootwear-costing-ai-2ncfyn6gmecat7u5m4kzyf.streamlit.app&count_bg=%20007BFF&title_bg=%20555555&icon=&icon_color=%23E7E7E7&title=Views&edge_flat=false"/>
+    <a href="https://www.hitwebcounter.com" target="_blank">
+        <img src="https://hitwebcounter.com/counter/counter.php?page=19782811&style=0006&nbdigits=5&type=page&initCount=0" title="Counter Widget" Alt="Visit counter For Websites" border="0" />
     </a>
     """,
     unsafe_allow_html=True
